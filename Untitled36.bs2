@@ -1,0 +1,42 @@
+' {$STAMP BS2}
+' {$PBASIC 2.5}
+
+' ~ Movement Commands
+CMD_Move_Forward      CON  111
+CMD_Move_Backward     CON  100
+CMD_Move_Rotate_Left  CON  101
+CMD_Move_Rotate_Right CON  110
+CMD_Move_Faster       CON  121
+CMD_Move_Slower       CON  122
+CMD_Move_STOP         CON  199
+
+' ##### Initialize Runtime #####
+BAUD                  CON   84
+COMDATA               VAR   Word
+
+' ##### Initialize Motor Controller #####
+PIN_MC_Forward    PIN 12
+PIN_MC_Turn       PIN 13
+CMD_MC_Turn       VAR Bit    ' 1 or 0:  1 = Turn
+CMD_MC_Speed      VAR Word
+POS_MC_Speed      VAR Word
+POS_MC_Throttle   VAR Word   ' Throttle Position 1 to 5
+FAC_MC_Throttle   VAR Word   ' The factor multiplied by the Throttle equals the Speed
+
+' Set the Throttle to 1
+POS_MC_Throttle   = 1
+FAC_MC_Throttle   = 100
+
+' Set the Speed TO 0
+CMD_MC_Speed      = 0
+POS_MC_Speed      = 0
+
+DO
+  DEBUGIN DEC COMDATA
+
+
+
+  ' Reset the Command Data
+  PAUSE 500
+  COMDATA = 0
+LOOP

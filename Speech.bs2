@@ -1,0 +1,125 @@
+' {$STAMP BS2}
+' {$PBASIC 2.5}
+
+' ##### Declare the Command Constants #####
+
+' ~ Speech Commands
+CMD_Mouth_Pin2_ON     CON   21
+CMD_Mouth_Pin2_OFF    CON   20
+CMD_Mouth_Pin1_ON     CON   11
+CMD_Mouth_Pin1_OFF    CON   10
+CMD_Mouth_Pin4_ON     CON   41
+CMD_Mouth_Pin4_OFF    CON   40
+CMD_Mouth_Pin5_ON     CON   51
+CMD_Mouth_Pin5_OFF    CON   50
+
+CMD_Mouth_Pos_OP1     CON   91
+CMD_Mouth_Pos_OP2     CON   92
+CMD_Mouth_Pos_OP3     CON   93
+CMD_Mouth_Pos_OP4     CON   94
+CMD_Mouth_Pos_NAR     CON   95
+CMD_Mouth_Pos_MED     CON   96
+CMD_Mouth_Pos_CLO     CON   90
+
+' ~ Movement Commands
+CMD_Move_Forward      CON  111
+CMD_Move_Backward     CON  100
+CMD_Move_Rotate_Left  CON  101
+CMD_Move_Rotate_Right CON  110
+CMD_Move_BREAK        CON  199
+
+' ~ Pan and Tilt Commands
+'
+' Command Arguments >= 1000 are reserved for Pan and Tilt Commands
+' The Constant value (0 to 130) times 10 is equal to the PULSOUT rate
+' which determines the servo position.
+'
+' The First Digit determines which servo - 1: Pan, 2: Tilt, e.g.:
+' 1065 - Centers the Pan servo
+' 2065 - Centers the Tilt servo
+' 1130 - Rotates the head all the way to the Right
+' 2130 - Tilts the head all the way Back
+' 1000 - Rotates the head all the way to the Left
+' 2000 - Tilts the head all the way to the Front
+
+' ##### Initialize Runtime #####
+BAUD                  CON   84
+COMDATA               VAR   Word
+p                     VAR   Word
+
+' ##### Initialize Speech #####
+  HIGH 2: PAUSE 100
+  HIGH 1: PAUSE 100
+  HIGH 4: PAUSE 100
+  HIGH 5: PAUSE 400
+  LOW 2
+  LOW 1
+  LOW 4
+  LOW 5
+
+' ##### Loop to get the Commands #####
+DO
+
+  SERIN 16, BAUD, 20, EndLoop, [DEC COMDATA]
+  IF COMDATA < 100 THEN
+
+  ' !-- Execute a Speech Command
+    SELECT COMDATA
+      CASE CMD_Mouth_Pin2_ON:  HIGH 2
+      CASE CMD_Mouth_Pin2_OFF: LOW  2
+      CASE CMD_Mouth_Pin1_ON:  HIGH 1
+      CASE CMD_Mouth_Pin1_OFF: LOW  1
+      CASE CMD_Mouth_Pin4_ON:  HIGH 4
+      CASE CMD_Mouth_Pin4_OFF: LOW  4
+      CASE CMD_Mouth_Pin5_ON:  HIGH 5
+      CASE CMD_Mouth_Pin5_OFF: LOW  5
+
+      CASE CMD_Mouth_Pos_OP1
+        HIGH 2
+        LOW  1
+        LOW  4
+        LOW  5
+
+      CASE CMD_Mouth_Pos_OP2
+        HIGH 2
+        HIGH 1
+        LOW  4
+        LOW  5
+
+      CASE CMD_Mouth_Pos_OP3
+        HIGH 2
+        HIGH 1
+        LOW  4
+        HIGH 5
+
+      CASE CMD_Mouth_Pos_OP4
+        HIGH 2
+        HIGH 1
+        HIGH 4
+        LOW  5
+
+      CASE CMD_Mouth_Pos_NAR
+        HIGH 2
+        LOW  1
+        LOW  4
+        HIGH 5
+
+      CASE CMD_Mouth_Pos_MED
+        HIGH 2
+        HIGH 1
+        HIGH 4
+        HIGH 5
+
+      CASE CMD_Mouth_Pos_CLO
+        LOW  2
+        LOW  1
+        LOW  4
+        LOW  5
+
+    ENDSELECT
+
+  ENDIF
+
+EndLoop:
+
+LOOP

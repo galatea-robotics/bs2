@@ -1,0 +1,218 @@
+' {$STAMP BS2}
+' {$PBASIC 2.5}
+
+' ##### Declare the Command Constants #####
+
+' ~ Speech Commands
+CMD_Mouth_Pin2_ON     CON   21
+CMD_Mouth_Pin2_OFF    CON   20
+CMD_Mouth_Pin1_ON     CON   11
+CMD_Mouth_Pin1_OFF    CON   10
+CMD_Mouth_Pin4_ON     CON   41
+CMD_Mouth_Pin4_OFF    CON   40
+CMD_Mouth_Pin5_ON     CON   51
+CMD_Mouth_Pin5_OFF    CON   50
+
+CMD_Mouth_Pos_OP1     CON   91
+CMD_Mouth_Pos_OP2     CON   92
+CMD_Mouth_Pos_OP3     CON   93
+CMD_Mouth_Pos_OP4     CON   94
+CMD_Mouth_Pos_NAR     CON   95
+CMD_Mouth_Pos_MED     CON   96
+CMD_Mouth_Pos_CLO     CON   90
+CMD_Mouth_Pos_SAD     CON   99
+
+' ~ Movement Commands
+CMD_Move_Forward      CON  111
+CMD_Move_Backward     CON  100
+CMD_Move_Rotate_Left  CON  101
+CMD_Move_Rotate_Right CON  110
+CMD_Move_Faster       CON  121
+CMD_Move_Slower       CON  122
+CMD_Move_STOP         CON  199
+CMD_Move_Set_Speed    VAR  Byte
+
+' ~ Pan and Tilt Commands
+'
+' Command Arguments >= 1000 are reserved for Pan and Tilt Commands:
+' The Constant value (10 to 150) times 10 is equal to the PULSOUT rate
+' which determines the servo position.
+'
+' The First Digit determines which servo - 1: Pan, 2: Tilt, e.g.:
+' 1075 - Centers the Pan servo
+' 2075 - Centers the Tilt servo
+' 1010 - Rotates the head all the way to the Left
+' 1150 - Rotates the head all the way to the Right
+' 2010 - Tilts the head all the way to the Front
+' 2150 - Tilts the head all the way Back
+'
+' 1901 - 1910: Sets the Pan servo speed 1 through 10
+' 2901 - 2910: Sets the Tilt servo speed 1 through 10
+
+' ##### Initialize Runtime #####
+BAUD                  CON   84
+COMDATA               VAR   Word
+p                     VAR   Word
+
+' ##### Initialize Speech #####
+HIGH 2: PAUSE 100
+HIGH 1: PAUSE 100  ' Light them all up in sequence
+HIGH 4: PAUSE 100  ' to verify connections and then
+HIGH 5: PAUSE 400  ' switch them all off!
+
+LOW 2: LOW 1: LOW 4: LOW 5
+
+' ##### Initialize Motor Controller #####
+PIN_MC_Forward        PIN   12
+PIN_MC_Turn           PIN   13
+CMD_MC_Turn           VAR   Bit    ' 0 or 1  = Turn
+CMD_MC_Reverse        VAR   Word   ' 1 or -1 = Reverse
+CMD_MC_Speed          VAR   Word
+POS_MC_Throttle       VAR   Word   ' Throttle Position 1 to 5
+FAC_MC_Throttle       CON   10     ' The factor multiplied by the Throttle equals the Speed
+CMD_MC_Previous       VAR   Byte
+
+' ##### Initialize Pan and Tilt #####
+PIN_PanTilt_Pan       PIN   14
+POS_PanTilt_Pan       VAR   Word
+CMD_PanTilt_Pan       VAR   Word
+SPEED_PanTilt_Pan     VAR   Word
+
+PIN_PanTilt_Tilt      PIN   15
+POS_PanTilt_Tilt      VAR   Word
+CMD_PanTilt_Tilt      VAR   Word
+SPEED_PanTilt_Tilt    VAR   Word
+
+' Center the Servos
+CMD_PanTilt_Pan    = 750
+POS_PanTilt_Pan    = 750
+SPEED_PanTilt_Pan  = 5
+
+CMD_PanTilt_Tilt   = 750
+POS_PanTilt_Tilt   = 750
+SPEED_PanTilt_Tilt = 2
+
+' ##### Loop to get the Commands #####
+DO
+
+  SERIN 16, BAUD, 20, PanTiltOutput, [DEC COMDATA]
+  IF COMDATA < 100 THEN
+
+  ' !-- Execute a Speech Command
+    SELECT COMDATA
+      CASE CMD_Mouth_Pin2_ON:  HIGH 2
+      CASE CMD_Mouth_Pin2_OFF: LOW  2
+      CASE CMD_Mouth_Pin1_ON:  HIGH 1
+      CASE CMD_Mouth_Pin1_OFF: LOW  1
+      CASE CMD_Mouth_Pin4_ON:  HIGH 4
+      CASE CMD_Mouth_Pin4_OFF: LOW  4
+      CASE CMD_Mouth_Pin5_ON:  HIGH 5
+      CASE CMD_Mouth_Pin5_OFF: LOW  5
+      CASE CMD_Mouth_Pos_OP1:  HIGH 2: LOW  1: LOW  4: LOW  5
+      CASE CMD_Mouth_Pos_OP2:  HIGH 2: HIGH 1: LOW  4: LOW  5
+      CASE CMD_Mouth_Pos_OP3:  HIGH 2: HIGH 1: LOW  4: HIGH 5
+      CASE CMD_Mouth_Pos_OP4:  HIGH 2: HIGH 1: HIGH 4: LOW  5
+      CASE CMD_Mouth_Pos_NAR:  HIGH 2: LOW  1: LOW  4: HIGH 5
+      CASE CMD_Mouth_Pos_MED:  HIGH 2: HIGH 1: HIGH 4: HIGH 5
+      CASE CMD_Mouth_Pos_CLO:  LOW  2: LOW  1: LOW  4: LOW  5
+      CASE CMD_Mouth_Pos_SAD:  LOW  2: HIGH 1: LOW  4: HIGH 5
+    ENDSELECT
+
+  ELSEIF COMDATA < 1000 THEN
+
+  ' !-- Execute a Movement Command
+    IF CMD_MC_Previous <> COMDATA THEN
+      POS_MC_Throttle = 1
+    ENDIF
+
+    SELECT COMDATA
+
+      CASE CMD_Move_Forward
+        CMD_MC_Turn     = 0
+        CMD_MC_Reverse  = 1
+        CMD_MC_Previous = COMDATA
+
+      CASE CMD_Move_Backward
+        CMD_MC_Turn     = 0
+        CMD_MC_Reverse  = -1
+        CMD_MC_Previous = COMDATA
+
+      CASE CMD_Move_Rotate_Left
+        CMD_MC_Turn     = 1
+        CMD_MC_Reverse  = 1
+        CMD_MC_Previous = COMDATA
+
+      CASE CMD_Move_Rotate_Right
+        CMD_MC_Turn     = 1
+        CMD_MC_Reverse  = -1
+        CMD_MC_Previous = COMDATA
+
+      CASE CMD_Move_Faster
+        IF POS_MC_Throttle < 5 THEN POS_MC_Throttle = POS_MC_Throttle + 1
+
+      CASE CMD_Move_Slower
+        IF POS_MC_Throttle > 1 THEN POS_MC_Throttle = POS_MC_Throttle - 1
+
+      CASE CMD_Move_STOP
+        CMD_MC_Turn     = 0
+        POS_MC_Throttle = 0
+        CMD_MC_Previous = COMDATA
+
+    ENDSELECT
+
+    ' Send the Command TO the Motor Controller ----
+    CMD_MC_Speed = 750 + (POS_MC_Throttle * FAC_MC_Throttle * CMD_MC_Reverse)
+
+    ' DOT NET will send the command at a preset interval thus sending
+    ' the Pulsout from the Stamp at this interval is not required.
+
+    IF NOT CMD_MC_Turn  = 1 THEN
+      PULSOUT PIN_MC_Forward, CMD_MC_Speed
+    ELSE
+      PULSOUT PIN_MC_Turn, CMD_MC_Speed
+    ENDIF
+
+  ELSE
+
+  ' !-- Execute a Pan or Tilt Command
+    IF COMDATA < 2000 THEN
+        CMD_PanTilt_Pan = 10 * (COMDATA - 1000)
+    ELSE
+        CMD_PanTilt_Tilt = 10 * (COMDATA - 2000)
+    ENDIF
+
+  ENDIF
+
+' ##### Output Command Data to Servos #####
+
+PanTiltOutput:
+
+  ' !-- Output to Pan or Tilt Servos
+  IF POS_PanTilt_Pan < CMD_PanTilt_Pan THEN
+    POS_PanTilt_Pan = POS_PanTilt_Pan + SPEED_PanTilt_Pan
+  ENDIF
+  IF POS_PanTilt_Pan > CMD_PanTilt_Pan THEN
+    POS_PanTilt_Pan = POS_PanTilt_Pan - SPEED_PanTilt_Pan
+  ENDIF
+
+  IF POS_PanTilt_Tilt < CMD_PanTilt_Tilt THEN
+    POS_PanTilt_Tilt = POS_PanTilt_Tilt + SPEED_PanTilt_Tilt
+  ENDIF
+  IF POS_PanTilt_Tilt  > CMD_PanTilt_Tilt THEN
+    POS_PanTilt_Tilt = POS_PanTilt_Tilt - SPEED_PanTilt_Tilt
+  ENDIF
+
+  PULSOUT PIN_PanTilt_Pan, POS_PanTilt_Pan
+  PULSOUT PIN_PanTilt_Tilt, POS_PanTilt_Tilt
+
+  ' The Servos are connected directly to the Stamp.
+  IF NOT CMD_MC_Previous = CMD_Move_STOP THEN
+    IF NOT CMD_MC_Turn = 1 THEN
+      PULSOUT PIN_MC_Forward, CMD_MC_Speed   ' Only do these IF there is
+    ELSE                                     ' no Motor Controller.
+      PULSOUT PIN_MC_Turn, CMD_MC_Speed
+    ENDIF
+  ENDIF
+
+  COMDATA = 0                              ' Reset the Command Data
+LOOP

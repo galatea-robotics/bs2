@@ -95,7 +95,10 @@ SPEED_PanTilt_Tilt = 2
 ' ##### Loop to get the Commands #####
 DO
 
-  SERIN 16, BAUD, 20, PanTiltOutput, [DEC COMDATA]
+  'SERIN 16, BAUD, 20, PanTiltOutput, [DEC COMDATA]
+
+  DEBUGIN DEC COMDATA              ' retrieve number in any format
+
   IF COMDATA < 100 THEN
 
   ' !-- Execute a Speech Command

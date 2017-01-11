@@ -1,42 +1,53 @@
 ' {$STAMP BS2}
 ' {$PBASIC 2.5}
 
-' ~ Movement Commands
-CMD_Move_Forward      CON  111
-CMD_Move_Backward     CON  100
-CMD_Move_Rotate_Left  CON  101
-CMD_Move_Rotate_Right CON  110
-CMD_Move_Faster       CON  121
-CMD_Move_Slower       CON  122
-CMD_Move_STOP         CON  199
-
 ' ##### Initialize Runtime #####
-BAUD                  CON   84
+BAUD                  CON   9600
 COMDATA               VAR   Word
 
-' ##### Initialize Motor Controller #####
-PIN_MC_Forward    PIN 12
-PIN_MC_Turn       PIN 13
-CMD_MC_Turn       VAR Bit    ' 1 or 0:  1 = Turn
-CMD_MC_Speed      VAR Word
-POS_MC_Speed      VAR Word
-POS_MC_Throttle   VAR Word   ' Throttle Position 1 to 5
-FAC_MC_Throttle   VAR Word   ' The factor multiplied by the Throttle equals the Speed
 
-' Set the Throttle to 1
-POS_MC_Throttle   = 1
-FAC_MC_Throttle   = 100
+' ##### Initialize Speech #####
+HIGH 2: PAUSE 100
+HIGH 1: PAUSE 100  ' Light them all up in sequence
+HIGH 4: PAUSE 100  ' to verify connections and then
+HIGH 5: PAUSE 400  ' switch them all off!
 
-' Set the Speed TO 0
-CMD_MC_Speed      = 0
-POS_MC_Speed      = 0
+LOW 2: LOW 1: LOW 4: LOW 5
+
+
+' ##### Initialize Pan and Tilt #####
+PIN_PanTilt_Pan       PIN   13
+POS_PanTilt_Pan       VAR   Word
+CMD_PanTilt_Pan       VAR   Word
+SPEED_PanTilt_Pan     VAR   Word
+
+PIN_PanTilt_Tilt      PIN   12
+POS_PanTilt_Tilt      VAR   Word
+CMD_PanTilt_Tilt      VAR   Word
+SPEED_PanTilt_Tilt    VAR   Word
+
+
+' ~ Pan and Tilt Commands
+'
+' Command Arguments >= 1000 are reserved for Pan and Tilt Commands
+' The Constant value (0 to 130) times 10 is equal to the PULSOUT rate
+' which determines the servo position.
+'
+' The First Digit determines which servo - 1: Pan, 2: Tilt, e.g.:
+' 1065 - Centers the Pan servo
+' 2065 - Centers the Tilt servo
+' 1130 - Rotates the head all the way to the Right
+' 2130 - Tilts the head all the way Back
+' 1000 - Rotates the head all the way to the Left
+' 2000 - Tilts the head all the way to the Front
+
 
 DO
-  DEBUGIN DEC COMDATA
 
+'  DEBUGIN DEC COMDATA
+  SERIN 16, BAUD, 500, PanTiltOutput, [DEC COMDATA]
 
-
-  ' Reset the Command Data
-  PAUSE 500
-  COMDATA = 0
+PanTiltOutput:
+  PULSOUT PIN_PanTilt_Pan, 500
+  PULSOUT PIN_PanTilt_Tilt, 750
 LOOP

@@ -19,6 +19,7 @@ CMD_Mouth_Pos_OP3     CON   93
 CMD_Mouth_Pos_OP4     CON   94
 CMD_Mouth_Pos_NAR     CON   95
 CMD_Mouth_Pos_MED     CON   96
+CMD_Mouth_Pos_FROWN   CON   99
 CMD_Mouth_Pos_CLO     CON   90
 
 ' ~ Movement Commands
@@ -60,7 +61,12 @@ p                     VAR   Word
 ' ##### Loop to get the Commands #####
 DO
 
-  SERIN 16, BAUD, 20, EndLoop, [DEC COMDATA]
+  DEBUG CLS, "Enter a Command: "
+
+  'SERIN 16, BAUD, 20, EndLoop, [DEC COMDATA]
+
+  DEBUGIN DEC COMDATA              ' retrieve number in any format
+
   IF COMDATA < 100 THEN
 
   ' !-- Execute a Speech Command
@@ -109,6 +115,18 @@ DO
         HIGH 1
         HIGH 4
         HIGH 5
+
+      CASE CMD_Mouth_Pos_FROWNL
+        HIGH 5
+        LOW  1
+        LOW  2
+        LOW  4
+
+      CASE CMD_Mouth_Pos_FROWNB
+        HIGH 5
+        HIGH 1
+        LOW  2
+        LOW  4
 
       CASE CMD_Mouth_Pos_CLO
         LOW  2

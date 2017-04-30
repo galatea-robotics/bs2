@@ -19,6 +19,7 @@ CMD_Mouth_Pos_OP3     CON   93
 CMD_Mouth_Pos_OP4     CON   94
 CMD_Mouth_Pos_NAR     CON   95
 CMD_Mouth_Pos_MED     CON   96
+CMD_Mouth_Pos_Ooh     CON   98
 CMD_Mouth_Pos_SAD     CON   99
 CMD_Mouth_Pos_CLO     CON   90
 
@@ -111,8 +112,8 @@ DO
       CASE CMD_Mouth_Pos_OP4:  HIGH 2: HIGH 1: HIGH 4: LOW  5
       CASE CMD_Mouth_Pos_NAR:  HIGH 2: LOW  1: LOW  4: HIGH 5
       CASE CMD_Mouth_Pos_MED:  HIGH 2: HIGH 1: HIGH 4: HIGH 5
-      CASE CMD_Mouth_Pos_CLO:  LOW  2: LOW  1: LOW  4: LOW  5
       CASE CMD_Mouth_Pos_SAD:  LOW  2: HIGH 1: LOW  4: HIGH 5
+      CASE CMD_Mouth_Pos_CLO:  LOW  2: LOW  1: LOW  4: LOW  5
     ENDSELECT
 
   ELSEIF COMDATA < 1000 THEN
